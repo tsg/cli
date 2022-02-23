@@ -133,7 +133,7 @@ jobs:
 
     - name: Release new version
       run: |
-        echo bumping version
+        exit 1
         # echo y | ./scripts/bump_version.sh
 
   # Tags created by build workflow don't trigger, call goreleaser:
