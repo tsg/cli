@@ -123,7 +123,6 @@ jobs:
     needs: on-release-start
     runs-on: ubuntu-latest
     timeout-minutes: 1
-    if: github.ref == 'refs/heads/main'
     steps:
     - uses: actions/checkout@v2
       with:
@@ -139,14 +138,13 @@ jobs:
   # Tags created by build workflow don't trigger, call goreleaser:
   publish-release:
     needs: [build, release]
-    if: github.ref == 'refs/heads/main'
     uses: xataio/cli/.github/workflows/goreleaser.yml@slack-notifications
 
   on-failure:
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    if: github.ref == 'refs/heads/main' && failure()
     needs: [publish-release]
+    if: failure()
     steps:
       - name: Post failure to Slack
         uses: slackapi/slack-github-action@v1.17.0
