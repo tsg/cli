@@ -140,7 +140,7 @@ jobs:
   publish-release:
     needs: [build, release]
     if: github.ref == 'refs/heads/main'
-    uses: xataio/cli/.github/workflows/goreleaser.yml@main
+    uses: xataio/cli/.github/workflows/goreleaser.yml@slack-notifications
 
   on-failure:
     runs-on: ubuntu-latest
