@@ -189,3 +189,48 @@ jobs:
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  on-success:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    needs: [publish-release]
+    steps:
+      - name: Post success to Slack
+        uses: slackapi/slack-github-action@v1.17.0
+        with:
+          channel-id: '#cd-activity'
+          payload: |
+            {
+              "text": "Publication of Xata CLI was successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":white_check_mark::rocket: *Publication of Xata CLI by ${{ github.actor }} was successful* :white_check_mark::rocket:"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*More info:* ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Commit URL:* ${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                  }
+                },
+                {
+                  "type": "divider"
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
