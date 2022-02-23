@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -16,8 +17,11 @@ import (
 )
 
 type TestConfig struct {
-	TestKey string `env:"TEST_API_KEY`
+	TestKey        string `env:"TEST_API_KEY"`
+	TestBinaryPath string `env:"TEST_XATA_PATH"`
 }
+
+const defaultXataCommand = "../xata"
 
 func GetTestConfigFromEnv() (config TestConfig, err error) {
 	err = envcfg.ReadEnv([]string{"../.env", "../.env.local"})
@@ -26,10 +30,16 @@ func GetTestConfigFromEnv() (config TestConfig, err error) {
 	}
 
 	config.TestKey = os.Getenv("TEST_API_KEY")
+	config.TestBinaryPath = os.Getenv("TEST_XATA_PATH")
+	if config.TestBinaryPath == "" {
+		config.TestBinaryPath = defaultXataCommand
+	}
+	config.TestBinaryPath, err = filepath.Abs(config.TestBinaryPath)
+	if err != nil {
+		return TestConfig{}, err
+	}
 	return
 }
-
-const e2eXataCommand = "../xata"
 
 // NewVT10XConsole returns a new expect.Console that multiplexes the
 // Stdin/Stdout to a VT10X terminal, allowing Console to interact with an
@@ -148,7 +158,7 @@ func TestAuthLoginCommand(t *testing.T) {
 			defer c.Close()
 
 			cmd := exec.Command(
-				e2eXataCommand,
+				config.TestBinaryPath,
 				fmt.Sprintf("--configdir=%s", configDir),
 				"auth", "login")
 			cmd.Stdin = c.Tty()
@@ -176,9 +186,9 @@ func TestAuthLoginCommand(t *testing.T) {
 	}
 }
 
-func startCommand(t *testing.T, configDir string, args ...string) (*expect.Console, *exec.Cmd) {
+func startCommand(t *testing.T, configDir string, binaryPath string, args ...string) (*expect.Console, *exec.Cmd) {
 	c, err := NewVT10XConsole(
-		expect.WithDefaultTimeout(1 * time.Second),
+		expect.WithDefaultTimeout(5 * time.Second),
 		//expect.WithStdout(os.Stdout),
 	)
 	require.NoError(t, err)
@@ -187,7 +197,7 @@ func startCommand(t *testing.T, configDir string, args ...string) (*expect.Conso
 		fmt.Sprintf("--configdir=%s", configDir),
 	}, args...)
 
-	cmd := exec.Command(e2eXataCommand, args...)
+	cmd := exec.Command(binaryPath, args...)
 	cmd.Stdin = c.Tty()
 	cmd.Stdout = c.Tty()
 	cmd.Stderr = c.Tty()
@@ -198,13 +208,13 @@ func startCommand(t *testing.T, configDir string, args ...string) (*expect.Conso
 	return c, cmd
 }
 
-func loginWithKey(t *testing.T, configDir string, apiKey string) {
-	c, cmd := startCommand(t, configDir, "auth", "login")
+func loginWithKey(t *testing.T, config *TestConfig, configDir string) {
+	c, cmd := startCommand(t, configDir, config.TestBinaryPath, "auth", "login")
 	defer c.Close()
 
 	_, err := c.ExpectString("Introduce your API key:")
 	require.NoError(t, err)
-	_, err = c.SendLine(apiKey)
+	_, err = c.SendLine(config.TestKey)
 	require.NoError(t, err)
 
 	_, err = c.Expect(
@@ -228,7 +238,7 @@ func TestAuthStatus(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(configDir)
 
-	c, cmd := startCommand(t, configDir, "auth", "status")
+	c, cmd := startCommand(t, configDir, config.TestBinaryPath, "auth", "status")
 
 	_, err = c.ExpectString("You are not logged in, run `xata auth login` first")
 	require.NoError(t, err)
@@ -236,9 +246,9 @@ func TestAuthStatus(t *testing.T) {
 	c.Close()
 	cmd.Wait()
 
-	loginWithKey(t, configDir, config.TestKey)
+	loginWithKey(t, &config, configDir)
 
-	c, cmd = startCommand(t, configDir, "auth", "status")
+	c, cmd = startCommand(t, configDir, config.TestBinaryPath, "auth", "status")
 	defer c.Close()
 	_, err = c.ExpectString("Client is logged in")
 	require.NoError(t, err)
