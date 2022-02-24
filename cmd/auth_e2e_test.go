@@ -152,7 +152,7 @@ func TestAuthLoginCommand(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			c, err := NewVT10XConsole(
 				expect.WithDefaultTimeout(1 * time.Second),
-				//expect.WithStdout(os.Stdout),
+				// expect.WithStdout(os.Stdout),
 			)
 			require.NoError(t, err)
 			defer c.Close()
@@ -189,7 +189,7 @@ func TestAuthLoginCommand(t *testing.T) {
 func startCommand(t *testing.T, configDir string, binaryPath string, args ...string) (*expect.Console, *exec.Cmd) {
 	c, err := NewVT10XConsole(
 		expect.WithDefaultTimeout(5 * time.Second),
-		//expect.WithStdout(os.Stdout),
+		// expect.WithStdout(os.Stdout),
 	)
 	require.NoError(t, err)
 
