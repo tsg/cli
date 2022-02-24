@@ -69,8 +69,7 @@ jobs:
       run: make check
 
     - name: Run tests
-      run: |
-        go test -failfast -v .
+      run: make test
 
   # We want to release all merges to main for now:
   release:
