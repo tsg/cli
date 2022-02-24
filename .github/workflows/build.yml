@@ -69,6 +69,8 @@ jobs:
       run: make check
 
     - name: Run tests
+      env:
+        TEST_API_KEY: ${{ secrets.TEST_API_KEY }}
       run: make test
 
   # We want to release all merges to main for now:
